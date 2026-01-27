@@ -2,10 +2,23 @@ services:
   server:
     build:
       context: .
+    user: "1027:100"
     ports:
-      - "8080:8080"
-    volumes:
-      - ./run/data:/data
-      - ./run/media:/media
+      - "8085:8080"
     env_file:
       - .env
+    extra_hosts:
+      - "libro.fm:35.160.120.6"
+      - "libro.fm:54.214.102.199"
+      - "libro.fm:34.211.139.214"
+    volumes:
+      - ./data:/data
+      - /volume1/multimedia/audiobooks/librofm:/media
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# set: ts=2 sw=2 sts=2 ai et :

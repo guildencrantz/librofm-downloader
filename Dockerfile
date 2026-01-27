@@ -33,7 +33,7 @@ RUN apk add --no-cache \
  && mkdir /var/cache/apk
 
 ENV \
-    JAVA_OPTS="-Xmx4G" \
+    JAVA_OPTS="-Xmx4G -Dsun.net.spi.nameservice.nameservers=8.8.8.8,1.1.1.1 -Dsun.net.spi.nameservice.provider.1=dns,sun" \
     LIBRO_FM_USERNAME="" \
     LIBRO_FM_PASSWORD="" \
     DRY_RUN="false" \

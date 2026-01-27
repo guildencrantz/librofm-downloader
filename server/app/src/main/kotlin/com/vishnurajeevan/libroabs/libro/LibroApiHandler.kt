@@ -50,29 +50,42 @@ class LibroApiHandler(
 
   suspend fun fetchLoginData(username: String, password: String) = withContext(ioDispatcher) {
     if (authTokenStorage.getData().token.isNullOrEmpty()) {
-      val tokenData = libroAPI.fetchLoginData(
-        LoginRequest(username = username, password = password)
-      )
-      if (tokenData.access_token != null) {
-        authTokenStorage.update {
-          it.copy(
-            token = tokenData.access_token
-          )
+      lfdLogger.i("Attempting login for user: $username")
+      try {
+        val tokenData = libroAPI.fetchLoginData(
+          LoginRequest(username = username, password = password)
+        )
+        lfdLogger.i("Login response received, access_token present: ${tokenData.access_token != null}")
+        if (tokenData.access_token != null) {
+          lfdLogger.i("Successfully authenticated to Libro.fm")
+          authTokenStorage.update {
+            it.copy(
+              token = tokenData.access_token
+            )
+          }
+        } else {
+          lfdLogger.i("Login failed - no access token in response")
+          println("Login failed!")
+          throw IllegalArgumentException("failed login!")
         }
-      } else {
-        println("Login failed!")
-        throw IllegalArgumentException("failed login!")
+      } catch (e: Exception) {
+        lfdLogger.i("Login exception: ${e.message}")
+        throw e
       }
+    } else {
+      lfdLogger.i("Using existing auth token")
     }
   }
 
   private val token by lazy { runBlocking { "Bearer ${authTokenStorage.getData().token}" } }
 
   suspend fun fetchLibrary(page: Int = 1) = withContext(ioDispatcher) {
+    lfdLogger.v("Fetching library from Libro.fm")
     libroLibraryStorage.update {
       val firstPage = libroAPI.fetchLibrary(authToken = token, page = page)
 
       if (firstPage.total_pages > 1) {
+        lfdLogger.v("Library has ${firstPage.total_pages} pages, fetching remaining pages")
         var allPages = firstPage
         (2..firstPage.total_pages)
           .forEach { i ->
@@ -81,9 +94,11 @@ class LibroApiHandler(
               audiobooks = allPages.audiobooks + nextPage.audiobooks
             )
           }
+        lfdLogger.v("Found ${allPages.audiobooks.size} books in library")
         allPages
       }
       else {
+        lfdLogger.v("Found ${firstPage.audiobooks.size} books in library")
         firstPage
       }
     }

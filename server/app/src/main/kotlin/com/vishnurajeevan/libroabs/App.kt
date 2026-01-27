@@ -217,9 +217,10 @@ class App(
   }
 
   private suspend fun processLibrary(overwrite: Boolean = false) {
+    lfdLogger.v("Processing library for downloads")
     val localLibrary = libroClient.getLocalLibrary()
 
-    localLibrary.audiobooks
+    val booksToDownload = localLibrary.audiobooks
       .let {
         if (serverInfo.limit == -1) {
           it
@@ -234,6 +235,10 @@ class App(
           true
         }
       }
+
+    lfdLogger.v("Found ${booksToDownload.size} books to download")
+
+    booksToDownload
       .map { book ->
         processingScope.async {
           processingSemaphore.withPermit {
@@ -320,8 +325,11 @@ class App(
         )
       }
 
+    lfdLogger.v("Completed downloading ${booksToDownload.size} audiobooks")
+
     if (serverInfo.downloadExtras) {
-      localLibrary.audiobooks
+      lfdLogger.v("Processing PDF extras")
+      val booksWithExtras = localLibrary.audiobooks
         .let {
           if (serverInfo.limit == -1) {
             it
@@ -336,6 +344,10 @@ class App(
             true
           }
         }
+
+      lfdLogger.v("Found ${booksWithExtras.size} books with PDF extras to download")
+
+      booksWithExtras
         .map { book ->
           processingScope.async {
             processingSemaphore.withPermit {
@@ -362,8 +374,10 @@ class App(
             )
           )
         }
+      lfdLogger.v("Completed downloading PDF extras")
     }
 
+    lfdLogger.v("Library processing complete")
   }
 
   private suspend fun syncOwned() {

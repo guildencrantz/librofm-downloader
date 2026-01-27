@@ -43,6 +43,7 @@ kotlin-inject-anvil-runtime-optional = { module = "software.amazon.lastmile.kotl
 
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-client-content-negotiation= { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-html = { module = "io.ktor:ktor-server-html-builder", version.ref = "ktor" }

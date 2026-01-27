@@ -36,6 +36,7 @@ class StorageMigrator(
   @Io private val ioDispatcher: CoroutineDispatcher,
 ) {
   suspend fun migrate() = withContext(ioDispatcher) {
+    if (serverInfo.dryRun) return@withContext
     if (downloadHistoryRepo.downloadCount() == 0L) {
       downloadHistoryStorage.getData()
         .books

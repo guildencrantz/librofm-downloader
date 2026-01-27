@@ -317,16 +317,18 @@ class App(
       }
       .awaitAll()
       .forEachIndexed { index, it ->
-        if (index == 0) {
-          serverInfo.webhookUrls.forEach { webhookApi.postToWebhook(it) }
-        }
-        dbWriter.write(
-          DownloadItem(
-            isbn = it.isbn,
-            format = it.format,
-            path = it.path
+        if (!serverInfo.dryRun) {
+          if (index == 0) {
+            serverInfo.webhookUrls.forEach { webhookApi.postToWebhook(it) }
+          }
+          dbWriter.write(
+            DownloadItem(
+              isbn = it.isbn,
+              format = it.format,
+              path = it.path
+            )
           )
-        )
+        }
       }
 
     lfdLogger.v("Completed downloading ${booksToDownload.size} audiobooks")
@@ -369,14 +371,16 @@ class App(
         }
         .awaitAll()
         .forEachIndexed { index, it ->
-          if (index == 0) {
-            serverInfo.webhookUrls.forEach { webhookApi.postToWebhook(it) }
-          }
-          dbWriter.write(
-            DownloadPdfExtraItem(
-              isbn = it.isbn
+          if (!serverInfo.dryRun) {
+            if (index == 0) {
+              serverInfo.webhookUrls.forEach { webhookApi.postToWebhook(it) }
+            }
+            dbWriter.write(
+              DownloadPdfExtraItem(
+                isbn = it.isbn
+              )
             )
-          )
+          }
         }
       lfdLogger.v("Completed downloading PDF extras")
     }

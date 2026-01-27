@@ -73,7 +73,7 @@ abstract class AppComponent(
   fun providesTargetDir(lfdLogger: Logger): (Book) -> File = { book ->
     File("${serverInfo.mediaDir}/${book.createPath(serverInfo.pathPattern)}")
       .also {
-        lfdLogger.v("Target Directory: $it")
+        lfdLogger.v("Target Directory: '$it'")
       }
   }
 

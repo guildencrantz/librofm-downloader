@@ -93,6 +93,9 @@ class LibroDownloader : SuspendingCliktCommand("LibroFm Downloader") {
   private val ffprobePath by option("--ffprobe-path")
     .default("/usr/bin/ffprobe")
 
+  private val skipSync by option("--skip-sync", envvar = "SKIP_SYNC")
+    .flag(default = false)
+
   private val libroFmUsername by option("--libro-fm-username", envvar = "LIBRO_FM_USERNAME")
     .required()
 
@@ -125,7 +128,8 @@ class LibroDownloader : SuspendingCliktCommand("LibroFm Downloader") {
       audioQuality = audioQuality,
       skipTrackingIsbns = skipTrackingIsbns,
       hardcoverSyncMode = hardcoverOptions?.hardcoverSyncMode ?: TrackerSyncMode.ALL,
-      webhookUrls = webhookUrls
+      webhookUrls = webhookUrls,
+      skipSync = skipSync
     )
 
     val graph = AppComponent::class.create(serverInfo)

@@ -70,8 +70,10 @@ class App(
   @OptIn(ExperimentalTime::class)
 
   suspend fun run() {
-    libroClient.fetchLoginData(serverInfo.libroUserName, serverInfo.libroPassword)
-    trackerConnector?.login()
+    if (!serverInfo.dryRun) {
+      libroClient.fetchLoginData(serverInfo.libroUserName, serverInfo.libroPassword)
+      trackerConnector?.login()
+    }
 
     appScope.launch {
       fullUpdate(delayForInitial = !serverInfo.dryRun)
@@ -111,7 +113,9 @@ class App(
   ) {
     val delay = if (delayForInitial || overwrite) 1.minutes else 0.minutes
     healthCheckClient.startMeasureWithToken()
-    libroClient.fetchLibrary()
+    if (!serverInfo.skipSync) {
+      libroClient.fetchLibrary()
+    }
     delay(delay)
     processLibrary(overwrite)
     delay(delay)

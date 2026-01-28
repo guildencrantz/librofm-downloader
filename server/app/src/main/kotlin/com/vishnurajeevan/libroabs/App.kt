@@ -246,7 +246,16 @@ class App(
       .map { book ->
         processingScope.async {
           processingSemaphore.withPermit {
-            val targetDir = targetDir(book).also { it.mkdirs() }
+            val targetDir = targetDir(book)
+            if (serverInfo.dryRun) {
+              lfdLogger.i("[DRY RUN] Would download ${book.title} to ${targetDir.path}")
+              return@withPermit LibroDownloadItem(
+                isbn = book.isbn,
+                format = DownloadedFormat.MP3,
+                path = targetDir.path,
+              )
+            }
+            targetDir.mkdirs()
             lfdLogger.v("Downloading ${book.title}")
             when (serverInfo.format) {
               BookFormat.MP3 -> {
@@ -357,7 +366,14 @@ class App(
         .map { book ->
           processingScope.async {
             processingSemaphore.withPermit {
-              val targetDir = targetDir(book).also { it.mkdirs() }
+              val targetDir = targetDir(book)
+              if (serverInfo.dryRun) {
+                lfdLogger.i("[DRY RUN] Would download PDF extras for ${book.title} to ${targetDir.path}")
+                return@withPermit DownloadPdfExtraItem(
+                  isbn = book.isbn
+                )
+              }
+              targetDir.mkdirs()
               libroClient.downloadPdfExtras(
                 isbn = book.isbn,
                 data = book.audiobook_info.pdf_extras,

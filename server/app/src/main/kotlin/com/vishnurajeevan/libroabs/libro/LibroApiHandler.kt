@@ -20,6 +20,8 @@ import com.vishnurajeevan.libroabs.models.libro.WishlistItemSyncStatus
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.Url
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.readAvailable
@@ -215,27 +217,39 @@ class LibroApiHandler(
   }
 
   private suspend fun downloadFile(url: Url, destinationFile: File) {
-    lfdLogger.v(
-      """
-      ----
-      Downloading $url to ${destinationFile.name}
-      ----
-    """.trimIndent()
-    )
-    val response = downloadClient.get(url)
+    lfdLogger.i("downloadFile: Starting streaming download to ${destinationFile.name}")
 
-    val input = response.body<ByteReadChannel>()
-    FileOutputStream(destinationFile).use { output ->
-      val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+    downloadClient.prepareGet(url).execute { httpResponse ->
+      lfdLogger.v("downloadFile: Got response, status=${httpResponse.status}")
 
-      while (!input.isClosedForRead) {
-        val bytesRead = input.readAvailable(buffer)
-        if (bytesRead > 0) {
-          output.write(buffer, 0, bytesRead)
+      val channel: ByteReadChannel = httpResponse.bodyAsChannel()
+      lfdLogger.v("downloadFile: Got channel, starting to read")
+
+      FileOutputStream(destinationFile).use { output ->
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+        var totalBytes = 0L
+        var lastLoggedMb = 0L
+
+        while (!channel.isClosedForRead) {
+          val bytesRead = channel.readAvailable(buffer)
+          if (bytesRead == -1) {
+            lfdLogger.v("downloadFile: readAvailable returned -1, breaking")
+            break
+          }
+          if (bytesRead > 0) {
+            output.write(buffer, 0, bytesRead)
+            totalBytes += bytesRead
+
+            val currentMb = totalBytes / (1024 * 1024)
+            if (currentMb > lastLoggedMb) {
+              lfdLogger.v("downloadFile: Progress ${currentMb}MB (${totalBytes} bytes)")
+              lastLoggedMb = currentMb
+            }
+          }
         }
+        output.flush()
       }
-      output.flush()
+      lfdLogger.i("downloadFile: Complete - ${destinationFile.name} (${destinationFile.length()} bytes)")
     }
-    lfdLogger.v("Download complete: ${destinationFile.name} (${destinationFile.length()} bytes)")
   }
 }

@@ -63,10 +63,21 @@ interface NetworkComponent {
 
   @Provides
   @Named("download")
-  fun downloadClient(client: HttpClient) = client.config {
-    install(HttpTimeout) {
-      requestTimeoutMillis = 5 * 60 * 1000
+  fun downloadClient() = HttpClient(OkHttp) {
+    engine {
+      config {
+        protocols(listOf(Protocol.HTTP_1_1))
+        connectTimeout(60, TimeUnit.SECONDS)
+        readTimeout(10, TimeUnit.MINUTES)
+        writeTimeout(60, TimeUnit.SECONDS)
+      }
     }
+    install(HttpTimeout) {
+      requestTimeoutMillis = 30 * 60 * 1000   // 30 minutes total
+      connectTimeoutMillis = 60 * 1000
+      socketTimeoutMillis = 10 * 60 * 1000    // 10 minutes between chunks
+    }
+    // No logging for downloads - avoids dumping binary data to console
   }
 
   @Provides

@@ -228,13 +228,14 @@ class LibroApiHandler(
     FileOutputStream(destinationFile).use { output ->
       val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
 
-      while (true) {
+      while (!input.isClosedForRead) {
         val bytesRead = input.readAvailable(buffer)
-        if (bytesRead == -1) break
-
-        output.write(buffer, 0, bytesRead)
+        if (bytesRead > 0) {
+          output.write(buffer, 0, bytesRead)
+        }
       }
       output.flush()
     }
+    lfdLogger.v("Download complete: ${destinationFile.name} (${destinationFile.length()} bytes)")
   }
 }
